@@ -2,45 +2,44 @@ import streamlit as st
 import openai
 import speech_recognition as sr
 import pyttsx3
+import docx
 
-# Set your OpenAI API key here
-openai.api_key = "your-openai-api-key"
+# Title
+st.title("🎙️ Voice to AI Chat Assistant")
 
-# Text-to-Speech engine initialization
-engine = pyttsx3.init()
+# OpenAI API Key
+openai.api_key = st.text_input("Enter your OpenAI API key", type="password")
 
-# Function to convert speech to text
-def speech_to_text():
-    r = sr.Recognizer()
+# Textbox
+user_input = st.text_input("Type your message or use voice 🎤")
+
+# Voice Input
+if st.button("🎤 Speak"):
+    recognizer = sr.Recognizer()
     with sr.Microphone() as source:
-        st.info("Listening...")
-        audio = r.listen(source)
+        st.write("Listening...")
+        audio = recognizer.listen(source)
         try:
-            query = r.recognize_google(audio)
-            st.success(f"You said: {query}")
-            return query
+            text = recognizer.recognize_google(audio)
+            st.success(f"You said: {text}")
+            user_input = text
         except sr.UnknownValueError:
-            st.error("Sorry, could not understand your voice.")
-        except sr.RequestError:
-            st.error("Could not request results. Check your internet connection.")
-    return ""
+            st.error("Sorry, could not understand audio.")
 
-# Function to get response from OpenAI
-def get_ai_response(prompt):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
-        )
-        return response['choices'][0]['message']['content']
-    except Exception as e:
-        st.error(f"OpenAI Error: {e}")
-        return ""
+# Send to OpenAI
+if st.button("💬 Ask AI"):
+    if user_input and openai.api_key:
+        with st.spinner("Getting response..."):
+            response = openai.ChatCompletion.create(
+                model="gpt-3.5-turbo",
+                messages=[{"role": "user", "content": user_input}]
+            )
+            reply = response["choices"][0]["message"]["content"]
+            st.success(reply)
 
-# Function to speak the response
-def speak_text(text):
-    engine.say(text)
-    engine.r
+            # Text to Speech
+            engine = pyttsx3.init()
+            engine.say(reply)
+            engine.runAndWait()
+    else:
+        st.warning("Please enter a message and API key.")
