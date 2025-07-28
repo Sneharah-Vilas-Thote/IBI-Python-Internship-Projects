@@ -1,6 +1,0 @@
-streamlit
-openai
-python-docx
-SpeechRecognition
-pyttsx3
-pyaudio
